@@ -290,6 +290,10 @@ Update the `listen_host` setting to allow ClickHouse to accept connections from 
 <listen_host>0.0.0.0</listen_host>
 ```
 
+```bash
+sudo systemctl restart clickhouse-server
+```
+
 ### 4.5 Verify the Cluster is Configured
 
 Restart both nodes, then confirm the cluster topology:
