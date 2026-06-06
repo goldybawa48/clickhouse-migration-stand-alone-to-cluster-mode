@@ -1,4 +1,4 @@
-# ClickHouse High Availability — Production Setup & Replication Runbook
+# ClickHouse High Availability — Cluster Mode Setup From Stand Alone Steps
 
 > Migrate a standalone ClickHouse EC2 instance to a fault-tolerant **2-node replicated cluster** using ClickHouse Keeper.
 
@@ -189,7 +189,7 @@ sudo vim /etc/clickhouse-server/config.d/remote_servers.xml
 ```xml
 <clickhouse>
     <remote_servers>
-        <reelo_cluster>
+        <cluster>
             <shard>
                 <replica>
                     <host><Node1_IP></host>
@@ -204,14 +204,14 @@ sudo vim /etc/clickhouse-server/config.d/remote_servers.xml
                     <password>YOUR_PASSWORD</password>
                 </replica>
             </shard>
-        </reelo_cluster>
+        </cluster>
     </remote_servers>
     <zookeeper>
         <node><host><Node1_IP></host><port>9181</port></node>
         <node><host><Node2_IP></host><port>9181</port></node>
     </zookeeper>
     <macros>
-        <cluster>reelo_cluster</cluster>
+        <cluster>cluster</cluster>
         <shard>01</shard>
         <replica>node1</replica>
     </macros>
@@ -227,7 +227,7 @@ sudo vim /etc/clickhouse-server/config.d/remote_servers.xml
 ```xml
 <clickhouse>
     <remote_servers>
-        <reelo_cluster>
+        <cluster>
             <shard>
                 <replica>
                     <host><Node1_IP></host>
@@ -242,14 +242,14 @@ sudo vim /etc/clickhouse-server/config.d/remote_servers.xml
                     <password>YOUR_PASSWORD</password>
                 </replica>
             </shard>
-        </reelo_cluster>
+        </cluster>
     </remote_servers>
     <zookeeper>
         <node><host><Node1_IP></host><port>9181</port></node>
         <node><host><Node2_IP></host><port>9181</port></node>
     </zookeeper>
     <macros>
-        <cluster>reelo_cluster</cluster>
+        <cluster>cluster</cluster>
         <shard>01</shard>
         <replica>node2</replica>
     </macros>
@@ -302,11 +302,11 @@ Restart both nodes, then confirm the cluster topology:
 sudo systemctl restart clickhouse-server
 
 clickhouse-client --password 'YOUR_PASSWORD' \
-  --query "SELECT * FROM system.clusters WHERE cluster = 'reelo_cluster';"
+  --query "SELECT * FROM system.clusters WHERE cluster = 'cluster';"
 
 # Expected: 2 rows, one per replica
-#   reelo_cluster  1  1  0  1  172.31.46.46  ...  is_local=1
-#   reelo_cluster  1  1  0  2  172.31.45.2   ...  is_local=0
+#   cluster  1  1  0  1  172.31.46.46  ...  is_local=1
+#   cluster  1  1  0  2  172.31.45.2   ...  is_local=0
 ```
 
 ---
@@ -332,7 +332,7 @@ RENAME TABLE db.table_name TO db.table_name_migration_backup;
 SET allow_experimental_object_type = 1;
 CREATE TABLE db.table_name ( /* ...same columns... */ )
 ENGINE = ReplicatedReplacingMergeTree(
-  '/clickhouse/tables/reelo_cluster/01/db/table_name',
+  '/clickhouse/tables/cluster/01/db/table_name',
   '{replica}',
   version_column
 )
@@ -405,7 +405,7 @@ python3 /home/ubuntu/migrate_replication.py
 -- Confirm all tables now use Replicated engines
 SELECT name, engine, total_rows
 FROM system.tables
-WHERE database = 'reelo_development'
+WHERE database = 'development'
   AND engine LIKE 'Replicated%'
 ORDER BY name;
 
@@ -413,7 +413,7 @@ ORDER BY name;
 -- total_replicas = 2, active_replicas = 2, queue_size = 0
 SELECT table, is_leader, total_replicas, active_replicas, queue_size
 FROM system.replicas
-WHERE database = 'reelo_development'
+WHERE database = 'development'
 ORDER BY table;
 ```
 
