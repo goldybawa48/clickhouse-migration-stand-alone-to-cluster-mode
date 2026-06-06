@@ -276,7 +276,21 @@ sudo vim /etc/clickhouse-server/users.d/settings.xml
 </clickhouse>
 ```
 
-### 4.4 Verify the Cluster is Configured
+### 4.4 Allow Listening for ClickHouse (Second Node)
+
+Open the ClickHouse configuration file:
+
+```bash
+sudo vim /etc/clickhouse-server/config.xml
+```
+
+Update the `listen_host` setting to allow ClickHouse to accept connections from all network interfaces:
+
+```xml
+<listen_host>0.0.0.0</listen_host>
+```
+
+### 4.5 Verify the Cluster is Configured
 
 Restart both nodes, then confirm the cluster topology:
 
@@ -410,7 +424,7 @@ ORDER BY table;
 3. Set its scheme to **internal**.
 4. Create target groups for ports 8123 and 9000, and register both nodes.
 
-https://github.com/user-attachments/assets/64ea519c-6275-4df3-9738-c0c6f573688d
+![AWS Network Load Balancer Configuration](https://github.com/user-attachments/assets/64ea519c-6275-4df3-9738-c0c6f573688d)
 
 ### 7.2 Failover Test
 
